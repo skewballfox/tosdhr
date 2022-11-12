@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from time import sleep
 from requests import request
+from tosdhr.services import get_reviewed_documents
 
 
 class DataHandler(object):
@@ -20,15 +21,17 @@ class DataHandler(object):
 
     def get_or_scrape(self, data_dir, file_name: str, url: str):
 
-        file_path = self.data_dir / file_name
+        file_path = data_dir / file_name
         if file_path.exists():
             with open(file_path, "r") as f:
+
                 return json.loads(f.read())
         else:
             content = request("get", url).json()
             # added to avoid spamming ToS;Dr's API
             sleep(0.5)
             with open(file_path, "w") as f:
+                print(f"writing {file_path}")
                 json.dump(content, f)
             return content
 
@@ -37,14 +40,14 @@ class DataHandler(object):
             self.data_dir, "all_services.json", "https://api.tosdr.org/all-services/v1/"
         )
 
-    def get_service(self, service_name: str):
+    def get_service(self, service_name: str, id: int):
         """function to get the json data associated with the service.
         NOTE: may wind up modifying the returned json to be only content relevant to building the model
         """
         return self.get_or_scrape(
             self.services_dir,
             service_name + ".json",
-            f"https://api.tosdr.org/service/v1/?service={service_name}",
+            f"https://api.tosdr.org/service/v1/?service={id}",
         )
 
     def get_case(self, case_id: int | str):
@@ -55,14 +58,23 @@ class DataHandler(object):
         )
 
     def get_list_reviewed_services(self) -> list[str]:
-        reviewed_list: list[str] = []
+        reviewed_list = []
+
         for service in self.get_all_services()["parameters"]["services"]:
             if service["is_comprehensively_reviewed"] == True:
-                reviewed_list.append(service["name"])
+                name: str = service["name"]
+                id: int = service["id"]
+                reviewed_list.append((name, id))
+        print(len(reviewed_list))
         return reviewed_list
 
-    def get_reviewed_services(self):
-        services = []
-        for service_name in self.get_list_reviewed_services():
-            services.append(self.get_service(service_name))
-        return services
+    def get_all_reviewed_documents(self):
+        documents = {}
+        for (service_name, id) in self.get_list_reviewed_services():
+
+            docs = get_reviewed_documents(self.get_service(service_name, id))
+            # if docs in documents:
+            #     print("yeet")
+            documents.update(documents)
+
+        return documents
