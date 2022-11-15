@@ -106,6 +106,12 @@ class Document(object):
             )
         )
 
+    def get_annotation_cases(self):
+        cases = set()
+        for annotation in self.annotations:
+            cases.add(annotation.case_id)
+        return cases
+
     def __getitem__(self, text_slice):
         return self.text[text_slice]
 
@@ -141,6 +147,12 @@ class BookShelf(object):
 
     def update(self, other_bookshelf: "BookShelf"):
         self.__documents.update(other_bookshelf.__documents)
+
+    def get_annotation_cases(self):
+        cases = set()
+        for doc in self.__documents.values():
+            cases.update(doc.get_annotation_cases())
+        return cases
 
     def get_annotation_count(self):
         count = 0
