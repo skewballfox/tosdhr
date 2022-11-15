@@ -68,6 +68,12 @@ class Borks(object):
         self.documents.update(more_borks.documents)
         self.services.update(more_borks.services)
 
+    def __len__(self):
+        return len(self.annotations)
+
+    def get_number_borked_documents(self):
+        return len(self.documents)
+
 
 # use slots to make these objects relatively tiny
 # https://wiki.python.org/moin/UsingSlots
@@ -106,8 +112,18 @@ class Document(object):
     def __iter__(self):
         return iter(self.annotations)
 
+    def __len__(self):
+        """returns the number of annotations of the document
+
+        Returns:
+            int: total number of valid annotations
+        """
+        return len(self.annotations)
+
 
 class BookShelf(object):
+    __slots__ = ["__documents"]
+
     def __init__(self):
         self.__documents: dict[int, Document] = {}
 
@@ -120,15 +136,65 @@ class BookShelf(object):
     def __iter__(self):
         return iter(self.__documents)
 
+    def __len__(self):
+        return len(self.__documents)
+
     def update(self, other_bookshelf: "BookShelf"):
         self.__documents.update(other_bookshelf.__documents)
+
+    def get_annotation_count(self):
+        count = 0
+        for doc in self.__documents.values():
+            count += len(doc)
+        return count
+
+    def get_empty_doc_count(self):
+        count = 0
+        for doc in self.__documents.values():
+            if len(doc) == 0:
+                count += 1
+        return count
+
+    def prune(self):
+        to_remove = []
+        for k in self.__documents:
+            if len(self.__documents[k]) == 0:
+                to_remove.append(k)
+        for doc_id in to_remove:
+            self.__documents.pop(doc_id)
+
+    def get_average_annotation_count(self):
+        number_of_docs = len(self)
+        number_of_annotations = self.get_annotation_count()
+        return number_of_annotations / number_of_docs
+
+    def get_annotation_stats(self):
+        """Returns information useful for understanding the quality of the data
+        note you should call prune before this function, otherwise documents with no
+        annotations will throw off the results
+
+        Returns:
+            float: average number of annotations per document
+            int: max number of annotations in a document
+            int: min number of annotations in a document
+        """
+        number_of_docs = len(self)
+        annotation_count = 0
+        max_count = -1
+        min_count = 999999
+        for doc in self.__documents.values():
+            current_count = len(doc)
+            annotation_count += current_count
+            max_count = max(max_count, current_count)
+            min_count = min(min_count, current_count)
+        return annotation_count / number_of_docs, max_count, min_count
 
     # TODO: add methods for getting stats such as average number of annotations per document,
     # total number of annotations, and total number of distinct cases
 
 
-def get_reviewed_documents(service_json: dict) -> dict:
-    documents = {}
+def get_reviewed_documents(service_json: dict) -> tuple[BookShelf, Borks]:
+    documents = BookShelf()
     borks = Borks()
     for doc in service_json["parameters"]["documents"]:
         id: int = doc["id"]
