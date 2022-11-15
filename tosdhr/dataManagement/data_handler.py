@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from time import sleep
 from requests import request
-from tosdhr.services import get_reviewed_documents
+from tosdhr.dataManagement.services import get_reviewed_documents, Borks
 
 
 class DataHandler(object):
@@ -70,11 +70,13 @@ class DataHandler(object):
 
     def get_all_reviewed_documents(self):
         documents = {}
+        borks = Borks()
         for (service_name, id) in self.get_list_reviewed_services():
 
-            docs = get_reviewed_documents(self.get_service(service_name, id))
+            docs, new_borks = get_reviewed_documents(self.get_service(service_name, id))
             # if docs in documents:
             #     print("yeet")
-            documents.update(documents)
+            documents.update(docs)
+            borks.update(new_borks)
 
-        return documents
+        return documents, borks
