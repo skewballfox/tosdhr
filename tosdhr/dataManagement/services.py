@@ -4,6 +4,7 @@
 import sys
 from typing import Optional
 from enum import Enum
+from polyglot.detect import Detector
 
 borked_annotations = 0
 borked_docs = set()
@@ -84,6 +85,10 @@ class Annotation(object):
         self.quote_start: int = quote_start
         self.quote_end: int = quote_end
 
+    @property
+    def quote(self):
+        return slice(self.quote_start, self.quote_end)
+
 
 # TODO: implement get_item to return slice of text by index of underlying list
 # https://docs.python.org/3/reference/datamodel.html#object.__getitem__
@@ -105,6 +110,9 @@ class Document(object):
                 quote_stop,
             )
         )
+
+    def encode(self, encoding):
+        self.text.encode(encoding)
 
     def get_annotation_cases(self):
         cases = set()
@@ -148,6 +156,9 @@ class BookShelf(object):
     def update(self, other_bookshelf: "BookShelf"):
         self.__documents.update(other_bookshelf.__documents)
 
+    def values(self):
+        return self.__documents.values()
+
     def get_annotation_cases(self):
         cases = set()
         for doc in self.__documents.values():
@@ -174,6 +185,9 @@ class BookShelf(object):
                 to_remove.append(k)
         for doc_id in to_remove:
             self.__documents.pop(doc_id)
+
+    def pop(self, doc_id):
+        self.__documents.pop(doc_id)
 
     def get_average_annotation_count(self):
         number_of_docs = len(self)
@@ -205,6 +219,18 @@ class BookShelf(object):
     # total number of annotations, and total number of distinct cases
 
 
+def language_filter(docs: BookShelf, language="English"):
+    drop_list = []
+    for document in docs.values():
+
+        quote_language = Detector(document.text).language
+        if quote_language != language:
+            print()
+            drop_list.append(document.id)
+    for doc_id in drop_list:
+        docs.pop[doc_id]
+
+
 def get_reviewed_documents(service_json: dict) -> tuple[BookShelf, Borks]:
     documents = BookShelf()
     borks = Borks()
@@ -219,9 +245,6 @@ def get_reviewed_documents(service_json: dict) -> tuple[BookShelf, Borks]:
             case_id: int = point["case_id"]
             start: int = point["quoteStart"]
             stop: int = point["quoteEnd"]
-            print(point["source"])
-            print(service_json["parameters"]["name"])
-            print(start)
             if point["quoteText"] is None:
                 borks.add(
                     service_json["parameters"]["name"],
@@ -237,12 +260,6 @@ def get_reviewed_documents(service_json: dict) -> tuple[BookShelf, Borks]:
                 )
                 continue
             if documents[doc_id].text[start:stop] != point["quoteText"]:
-                print(service_json["parameters"]["name"])
-                print(documents[doc_id].name)
-                print(
-                    f"slice text:\n{documents[doc_id].text[start:stop]}\nquote text\n",
-                    point["quoteText"],
-                )
 
                 stop -= start
                 start = documents[doc_id].text.find(point["quoteText"])

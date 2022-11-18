@@ -65,7 +65,6 @@ class DataHandler(object):
                 name: str = service["name"]
                 id: int = service["id"]
                 reviewed_list.append((name, id))
-        print(len(reviewed_list))
         return reviewed_list
 
     def get_all_reviewed_documents(self):

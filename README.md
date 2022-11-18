@@ -14,4 +14,10 @@ cd tosdhr
 poetry install
 ```
 
-this readme is a WIP
+p.s. if you want to keep the virtual environment in the project folder (so vscode automatically detects it) run this command before `poetry install` inside the project folder
+
+```sh
+poetry config virtualenvs.in-project true --local
+```
+
+the `--local` flag makes it so that this setting only applies to this project, rather than being the default for every project. Remove it only if you want this to be the default behavior for every poetry managed project.
