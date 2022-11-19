@@ -7,7 +7,7 @@ from tosdhr.dataManagement.services import get_reviewed_documents, BookShelf, Bo
 
 class DataHandler(object):
     """class for handling input data for the model, pretty much the only part
-    of the code which should be interacting the with ToS;Dr website, or the
+    of the code which should be interacting the with ToS;DR website, or the
     data directory
     """
 
@@ -22,7 +22,6 @@ class DataHandler(object):
     def get_or_scrape(self, data_dir: Path, file_name: str, url: str):
         """either loads an existing json file from the local data directory,
         or gets the json data from the phoenix api, then saves it locally
-
         Args:
             data_dir (Path): Path to the data directory to check or save to
             file_name (str): the name of the
@@ -66,9 +65,14 @@ class DataHandler(object):
             f"https://api.tosdr.org/case/v1/?case={case_id}",
         )
 
+    def get_annotated_cases(self, cases_set: set):
+        cases_dict = {}
+        for case in cases_set:
+            cases_dict[str(case)] = self.get_case(case)
+        return cases_dict
+
     def get_list_reviewed_services(self) -> list[str]:
         reviewed_list = []
-
         for service in self.get_all_services()["parameters"]["services"]:
             if service["is_comprehensively_reviewed"] == True:
                 name: str = service["name"]
@@ -80,11 +84,9 @@ class DataHandler(object):
         documents = BookShelf()
         borks = Borks()
         for (service_name, id) in self.get_list_reviewed_services():
-
             docs, new_borks = get_reviewed_documents(self.get_service(service_name, id))
             # if docs in documents:
             #     print("yeet")
             documents.update(docs)
             borks.update(new_borks)
-
         return documents, borks
