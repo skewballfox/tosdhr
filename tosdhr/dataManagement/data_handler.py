@@ -19,12 +19,21 @@ class DataHandler(object):
         # does nothing if directory already exists
         self.services_dir.mkdir(parents=True, exist_ok=True)
 
-    def get_or_scrape(self, data_dir, file_name: str, url: str):
+    def get_or_scrape(self, data_dir: Path, file_name: str, url: str):
+        """either loads an existing json file from the local data directory,
+        or gets the json data from the phoenix api, then saves it locally
 
+        Args:
+            data_dir (Path): Path to the data directory to check or save to
+            file_name (str): the name of the
+            url (str): api url
+
+        Returns:
+            dict : the json representation of the data requested
+        """
         file_path = data_dir / file_name
         if file_path.exists():
             with open(file_path, "r") as f:
-
                 return json.loads(f.read())
         else:
             content = request("get", url).json()
