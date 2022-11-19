@@ -178,7 +178,12 @@ class BookShelf(object):
                 count += 1
         return count
 
+    def clean(self, language="English"):
+        self.prune()
+        language_filter(self, language=language)
+
     def prune(self):
+        """remove empty documents from the list of documents"""
         to_remove = []
         for k in self.__documents:
             if len(self.__documents[k]) == 0:
@@ -221,14 +226,20 @@ class BookShelf(object):
 
 def language_filter(docs: BookShelf, language="English"):
     drop_list = []
+    count = 0
     for document in docs.values():
 
-        quote_language = Detector(document.text).language
-        if quote_language != language:
-            print()
+        try:
+            quote_language = Detector(document.text).language.name
+            if quote_language != language:
+                print(f"quote lang: {quote_language}")
+                drop_list.append(document.id)
+        except Exception as e:
+            print(e)
             drop_list.append(document.id)
+    print(f"dropping {len(drop_list)} documents")
     for doc_id in drop_list:
-        docs.pop[doc_id]
+        docs.pop(doc_id)
 
 
 def get_reviewed_documents(service_json: dict) -> tuple[BookShelf, Borks]:
