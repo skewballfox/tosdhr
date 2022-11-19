@@ -5,6 +5,7 @@ import sys
 from typing import Optional
 from enum import Enum
 from polyglot.detect import Detector
+from collections import Counter
 
 borked_annotations = 0
 borked_docs = set()
@@ -79,6 +80,8 @@ class Borks(object):
 # use slots to make these objects relatively tiny
 # https://wiki.python.org/moin/UsingSlots
 class Annotation(object):
+    __slots__ = ["id", "case_id", "quote_start", "quote_end"]
+
     def __init__(self, id: int, case_id: int, quote_start: int, quote_end: int):
         self.id: int = id  # may wind up deleting this
         self.case_id: int = case_id
@@ -115,9 +118,9 @@ class Document(object):
         self.text.encode(encoding)
 
     def get_annotation_cases(self):
-        cases = set()
+        cases = Counter()
         for annotation in self.annotations:
-            cases.add(annotation.case_id)
+            cases[annotation.case_id] += 1
         return cases
 
     def __getitem__(self, text_slice):
@@ -160,7 +163,7 @@ class BookShelf(object):
         return self.__documents.values()
 
     def get_annotation_cases(self):
-        cases = set()
+        cases = Counter()
         for doc in self.__documents.values():
             cases.update(doc.get_annotation_cases())
         return cases
