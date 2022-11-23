@@ -19,6 +19,8 @@ print(
 
 case_counter = documents.get_annotation_cases()
 case_set = set(case_counter.keys())
+cases_dict = data.get_annotated_cases(case_set)
+print(cases_dict)
 print(
     f"average, max, and min number of annotations per document {documents.get_annotation_stats()}"
 )
