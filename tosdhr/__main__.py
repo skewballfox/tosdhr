@@ -3,6 +3,7 @@ from pathlib import Path
 from tosdhr.dataManagement.data_handler import DataHandler
 from tosdhr.dataManagement.services import language_filter
 
+from tosdhr.modelManager.bert import model
 
 data_dir: Path = Path(__file__).parent.parent / "data"
 output_dir: Path = Path(__file__).parent.parent / "outputs"
