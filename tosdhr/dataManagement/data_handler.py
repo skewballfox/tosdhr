@@ -18,6 +18,7 @@ class DataHandler(object):
 
         # does nothing if directory already exists
         self.services_dir.mkdir(parents=True, exist_ok=True)
+        self.cases_dir.mkdir(parents=True, exist_ok=True)
 
     def get_or_scrape(self, data_dir: Path, file_name: str, url: str):
         """either loads an existing json file from the local data directory,

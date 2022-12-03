@@ -202,6 +202,7 @@ class BookShelf(object):
         for doc in self.__documents.values():
             approved, declined = doc.get_annotation_case_counts()
             approved_cases.update(approved)
+            declined_cases.update(declined)
         return approved_cases, declined_cases
 
     def get_annotation_count(self):
@@ -217,10 +218,10 @@ class BookShelf(object):
                 count += 1
         return count
 
-    def clean(self, language="English"):
+    def clean(self, language="en"):
         approved, declined = self.get_annotation_cases()
-        approved_set = set(approved)
-        declined_set = set(declined)
+        # approved_set = set(approved)
+        # declined_set = set(declined)
 
         # print(f"no positive data: {declined_set-approved_set}")
         self.prune()
@@ -288,7 +289,8 @@ def language_filter(docs: BookShelf, language="en"):
             quote_language = detect(document.text)
             # quote_language = Detector(document.text).language.name
             if quote_language != language:
-                # print(f"quote lang: {quote_language}")
+                #print(f"language: {language}, len {len(language)}")
+                #print(f"quote lang: {quote_language}, quote_len {len(quote_language)}")
                 drop_list.append(document.id)
         except Exception as e:
             # print(e)
@@ -298,7 +300,7 @@ def language_filter(docs: BookShelf, language="en"):
         docs.pop(doc_id)
 
 
-def get_reviewed_documents(service_json: dict) -> tuple[BookShelf, Borks]:
+def get_reviewed_documents(service_json: dict,collect_declined:bool=False) -> tuple[BookShelf, Borks]:
     documents = BookShelf()
     borks = Borks()
     for doc in service_json["parameters"]["documents"]:
@@ -307,7 +309,7 @@ def get_reviewed_documents(service_json: dict) -> tuple[BookShelf, Borks]:
     for point in service_json["parameters"]["points"]:
         if point["document_id"] is not None:
             point_status = point["status"]
-            if point_status == "approved" or point_status == "declined":
+            if point_status == "approved" or (collect_declined and point_status == "declined"):
                 approved_flag = True if point_status == "approved" else False
                 # if approved_flag is False:
                 #    print(point)
