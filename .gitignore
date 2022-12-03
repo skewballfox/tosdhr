@@ -1,3 +1,4 @@
 data
 err.txt
 **/__pycache__
+.env
