@@ -14,6 +14,8 @@ six = "^1.16.0"
 wheel = "^0.38.4"
 PyICU = "^2.10.2"
 pycld2 = "^0.41"
+transformers = "^4.24.0"
+torch = "^1.13.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.10.0"
