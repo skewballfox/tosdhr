@@ -4,7 +4,8 @@
 import sys
 from typing import Optional
 from enum import Enum
-from polyglot.detect import Detector
+# from polyglot.detect import Detector
+from langdetect import detect, detect_langs
 from collections import Counter
 
 borked_annotations = 0
@@ -279,13 +280,13 @@ class BookShelf(object):
     # total number of annotations, and total number of distinct cases
 
 
-def language_filter(docs: BookShelf, language="English"):
+def language_filter(docs: BookShelf, language="en"):
     drop_list = []
     count = 0
     for document in docs.values():
-
         try:
-            quote_language = Detector(document.text).language.name
+            quote_language = detect(document.text)
+            # quote_language = Detector(document.text).language.name
             if quote_language != language:
                 # print(f"quote lang: {quote_language}")
                 drop_list.append(document.id)

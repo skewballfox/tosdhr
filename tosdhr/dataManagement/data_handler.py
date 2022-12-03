@@ -60,7 +60,7 @@ class DataHandler(object):
 
     def get_case(self, case_id: int | str):
         return self.get_or_scrape(
-            self.case_data_dir,
+            self.cases_dir,
             str(case_id) + ".json",
             f"https://api.tosdr.org/case/v1/?case={case_id}",
         )
