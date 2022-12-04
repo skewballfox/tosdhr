@@ -1,8 +1,35 @@
 import json
 from pathlib import Path
 from time import sleep
-from requests import request
+from requests import request, Session
 from tosdhr.dataManagement.services import get_reviewed_documents, BookShelf, Borks
+from dotenv import dotenv_values
+from bs4 import BeautifulSoup
+
+
+def get_topics(project_dir):
+    print(project_dir)
+    s = Session()
+    config = dotenv_values()
+    print(config)
+    response = s.get(
+        "https://edit.tosdr.org/topics",
+        auth=(config["USER"], config["PASSWORD"]),
+    )
+    soup = BeautifulSoup(response.content)
+    soup.footer.decompose()
+    # soup.body
+    # partial url
+    soup.select("a[href*=topics]")[0]
+    for topic in soup.select("a[href*=topics]"):
+        url = f"https://edit.tosdr.org/{topic.get('href')}"
+        # title for topic
+        topic_name = topic.next_element
+        print(BeautifulSoup(s.get(url).content).body.prettify())
+        break
+        # contents also prints title
+
+    print(s.get(url).content)
 
 
 class DataHandler(object):
@@ -13,6 +40,7 @@ class DataHandler(object):
 
     def __init__(self, data_dir: Path):
         self.data_dir = data_dir
+        self.project_dir = data_dir.parent
         self.services_dir = data_dir / "services"
         self.cases_dir = data_dir / "cases"
 
