@@ -7,8 +7,8 @@ from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 
 
-def get_topics(project_dir):
-    print(project_dir)
+def get_topics():
+
     s = Session()
     config = dotenv_values()
     print(config)

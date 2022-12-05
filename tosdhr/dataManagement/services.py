@@ -4,6 +4,7 @@
 import sys
 from typing import Optional
 from enum import Enum
+
 # from polyglot.detect import Detector
 from langdetect import detect, detect_langs
 from collections import Counter
@@ -173,7 +174,9 @@ class Document(object):
 
 
 class BookShelf(object):
-    __slots__ = ["__documents"]
+    __slots__ = [
+        "__documents"
+    ]  # __documents is has two fields, 1. text which is the document text, 2.annotations: list of slice indexes of the document
 
     def __init__(self):
         self.__documents: dict[int, Document] = {}
@@ -278,7 +281,24 @@ class BookShelf(object):
         return cases
 
     # TODO: add methods for getting stats such as average number of annotations per document,
-    # total number of annotations, and total number of distinct cases
+    def tokenize(self):
+        for document in self.__documents.values():
+            split_points = [0]
+            for annotation in document:
+                split_points.append(annotation.quote_end)
+            split_points.append(len(document.text))
+            raw_text = [
+                document.text[i, j] for i, j in zip(split_points[-1], split_points)
+            ]
+            print(raw_text)
+            for annotation in reversed(document):
+                document.text()
+                document.text = (
+                    document.text[: annotation.quote_start]
+                    + annotation.case_id
+                    + document.text[annotation.quote_start : annotation.quote_stop]
+                    + document.text[annotation.quote_stop :]
+                )
 
 
 def language_filter(docs: BookShelf, language="en"):
@@ -289,8 +309,8 @@ def language_filter(docs: BookShelf, language="en"):
             quote_language = detect(document.text)
             # quote_language = Detector(document.text).language.name
             if quote_language != language:
-                #print(f"language: {language}, len {len(language)}")
-                #print(f"quote lang: {quote_language}, quote_len {len(quote_language)}")
+                # print(f"language: {language}, len {len(language)}")
+                # print(f"quote lang: {quote_language}, quote_len {len(quote_language)}")
                 drop_list.append(document.id)
         except Exception as e:
             # print(e)
@@ -300,7 +320,9 @@ def language_filter(docs: BookShelf, language="en"):
         docs.pop(doc_id)
 
 
-def get_reviewed_documents(service_json: dict,collect_declined:bool=False) -> tuple[BookShelf, Borks]:
+def get_reviewed_documents(
+    service_json: dict, collect_declined: bool = False
+) -> tuple[BookShelf, Borks]:
     documents = BookShelf()
     borks = Borks()
     for doc in service_json["parameters"]["documents"]:
@@ -309,7 +331,9 @@ def get_reviewed_documents(service_json: dict,collect_declined:bool=False) -> tu
     for point in service_json["parameters"]["points"]:
         if point["document_id"] is not None:
             point_status = point["status"]
-            if point_status == "approved" or (collect_declined and point_status == "declined"):
+            if point_status == "approved" or (
+                collect_declined and point_status == "declined"
+            ):
                 approved_flag = True if point_status == "approved" else False
                 # if approved_flag is False:
                 #    print(point)
