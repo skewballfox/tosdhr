@@ -188,7 +188,11 @@ class BookShelf(object):
         self.__documents[doc_id] = doc
 
     def __iter__(self):
-        return iter(self.__documents)
+        """iterates over the documents, note the document_ids
+        are pretty useless once data has been fully aggregated in
+        the bookshelf so the keys are not returned
+        """
+        return iter(self.__documents.values())
 
     def __len__(self):
         return len(self.__documents)
@@ -281,9 +285,15 @@ class BookShelf(object):
         return cases
 
     # TODO: add methods for getting stats such as average number of annotations per document,
-    def tokenize(self):
+    def prep_to_tokenize(self):
+        raw_documents = []
+        categories = []
+        # TODO: confirm that there isn't a case 0
+        uncategorized: int = 0
         for document in self.__documents.values():
             split_points = [0]
+            doc_stop: int = len(document.text)
+            raw_text = []
             # for annotation in document:
             #    split_points.append(annotation.quote_end)
             # split_points.append(len(document.text))
@@ -291,14 +301,25 @@ class BookShelf(object):
             #    document.text[i, j] for i, j in zip(split_points[:-1], split_points[1:])
             # ]
             # print(raw_text)
-            for annotation in reversed(document):
-                document.text
-                document.text = (
-                    document.text[: annotation.quote_start]
-                    + annotation.case_id
-                    + document.text[annotation.quote_start : annotation.quote_stop]
-                    + document.text[annotation.quote_stop :]
-                )
+            for annotation in reversed(document.annotations):
+                # document.text
+                # document.text = (
+                #     document.text[: annotation.quote_start]
+                #     + annotation.case_id
+                #     + document.text[annotation.quote_start : annotation.quote_stop]
+                #     + document.text[annotation.quote_stop :]
+                # )
+                if annotation.quote_end != doc_stop:
+
+                    raw_text.append(document.text[annotation.quote_end : doc_stop])
+                    categories.append(0)
+                # should probably confirm that annotation is valid, murphies law and all that
+                # but fuck it
+                raw_text.append(document.text[annotation.quote])
+                categories.append(annotation.case_id)
+                doc_stop = annotation.quote_start
+            raw_documents.append(raw_text)
+        return raw_documents, categories
 
 
 def language_filter(docs: BookShelf, language="en"):

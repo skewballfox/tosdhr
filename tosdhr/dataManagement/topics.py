@@ -1,3 +1,7 @@
+from dotenv import dotenv_values
+from requests import request, Session
+from bs4 import BeautifulSoup
+
 # TODO: add code for pulling case data on all cases, but
 # filter it down to the cases we have annotations for
 class Case(object):
@@ -8,6 +12,7 @@ class Case(object):
         self.declined_annotations = []
 
 
+# ps we already have the function to get a list of cases, check main look for case_set
 def get_topics(project_dir):
     # print(project_dir)
     s = Session()

@@ -15,6 +15,7 @@ torch = "^1.13.0"
 langdetect = "^1.0.9"
 python-dotenv = "^0.21.0"
 beautifulsoup4 = "^4.11.1"
+tokenizers = "^0.13.2"
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.10.0"

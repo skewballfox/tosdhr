@@ -56,7 +56,7 @@ if args.tokenize:
 
     documents, borks = data.get_all_reviewed_documents()
     documents.clean()
-    documents.tokenize()
+    print(f" doc text{documents.tokenize()}")
 if args.bert_flag:
     from tosdhr.modelManager.bert import Annotator, train, evaluate
 
