@@ -11,12 +11,6 @@ output_dir: Path = Path(__file__).parent.parent / "outputs"
 data: DataHandler = DataHandler(data_dir)
 
 
-# print(f"total number of borked documents: {borks.get_number_borked_documents()}")
-# print(f"total number of annotations: {documents.get_annotation_count()}")
-# print(f"total number of borked annotations: {len(borks)}")
-# print(f"total number of distinct cases: {len(approved_case_counter)}")
-# print(f"approved case counter: {approved_case_counter}")
-# print(f" case dict {case_dict}")
 parser = argparse.ArgumentParser(description="So we can each use main")
 parser.add_argument(
     "-s",
@@ -41,7 +35,6 @@ parser.add_argument(
     dest="bert_flag",
     action="store_true",
     help="test the bert model",
-    # type=bool,
     default=False,
 )
 parser.add_argument(
@@ -50,7 +43,6 @@ parser.add_argument(
     dest="cpu_flag",
     action="store_true",
     help="test the bert model with cpu",
-    # type=bool,
     default=False,
 )
 # might wanna add a parser argument for cpu or gpu enabling rather than just checking for cuda and using it either way
@@ -60,19 +52,23 @@ if args.topics_flag:
     from tosdhr.dataManagement.data_handler import get_topics
 
     get_topics()
-if args.t:
+if args.tokenize:
 
     documents, borks = data.get_all_reviewed_documents()
     documents.clean()
     documents.tokenize()
 if args.bert_flag:
-    from tosdhr.modelManager.bert import model
+    from tosdhr.modelManager.bert import Annotator, train, evaluate
 
-    pass
+    train(Annotator, train_data, val_data)
+    evaluate(Annotator, test_data)
+
 if args.cpu_flag:
-    from tosdhr.modelManager.bert import model
+    from tosdhr.modelManager.bert import Annotator, train, evaluate
 
-    pass
+    train(Annotator, train_data, val_data, use_cpu=True)
+    evaluate(Annotator, test_data, use_cpu=True)
+
 # if no arguments have been passed
 # https://stackoverflow.com/questions/10698468/argparse-check-if-any-arguments-have-been-passed
 if not any(vars(args).values()):
@@ -88,3 +84,9 @@ if not any(vars(args).values()):
         f"average, max, and min number of annotations per document {documents.get_annotation_stats()}"
     )
     case_dict = documents.get_case_dict()
+    print(f"total number of borked documents: {borks.get_number_borked_documents()}")
+    print(f"total number of annotations: {documents.get_annotation_count()}")
+    print(f"total number of borked annotations: {len(borks)}")
+    print(f"total number of distinct cases: {len(approved_case_counter)}")
+    print(f"approved case counter: {approved_case_counter}")
+    print(f" case dict {case_dict}")

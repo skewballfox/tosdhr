@@ -284,15 +284,15 @@ class BookShelf(object):
     def tokenize(self):
         for document in self.__documents.values():
             split_points = [0]
-            for annotation in document:
-                split_points.append(annotation.quote_end)
-            split_points.append(len(document.text))
-            raw_text = [
-                document.text[i, j] for i, j in zip(split_points[-1], split_points)
-            ]
-            print(raw_text)
+            # for annotation in document:
+            #    split_points.append(annotation.quote_end)
+            # split_points.append(len(document.text))
+            # raw_text = [
+            #    document.text[i, j] for i, j in zip(split_points[:-1], split_points[1:])
+            # ]
+            # print(raw_text)
             for annotation in reversed(document):
-                document.text()
+                document.text
                 document.text = (
                     document.text[: annotation.quote_start]
                     + annotation.case_id

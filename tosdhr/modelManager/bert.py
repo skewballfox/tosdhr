@@ -32,17 +32,24 @@ class Annotator(nn.Model):
         return final_layer
 
 
-def train(model, train_data: torchDataset, val_data, learning_rate=1e-6, epochs=5):
-    train, val = torchDataset(train_data), torchDataset(val_data)
-    train_dataloader = torchDataLoader(train, batch_size=2, shuffle=True)
-    val_dataloader = torchDataLoader(val, batch_size=2)
-    use_cuda = cuda.is_available()
-    device = torch_device("cuda" if use_cuda else "cpu")
-    criterion = nn.CrossEntropyLoss()
-    optimizer = Adam(model.parameters(), lr=learning_rate)
+def train(
+    model: Annotator,
+    train_data: torchDataset,
+    val_data: torchDataset,
+    learning_rate=1e-6,
+    epochs=5,
+    use_cpu=False,
+):
+
+    train_dataloader = torchDataLoader(train_data, batch_size=2, shuffle=True)
+    val_dataloader = torchDataLoader(val_data, batch_size=2)
+    use_cuda: bool = cuda.is_available() if not use_cpu else False
+    device: torch_device = torch_device("cuda" if use_cuda else "cpu")
+    criterion: nn.CrossEntropyLoss = nn.CrossEntropyLoss()
+    optimizer: Adam = Adam(model.parameters(), lr=learning_rate)
 
     if use_cuda:
-        model = model.cuda()
+        model: Annotator = model.cuda()
         criterion = criterion.cuda()
 
     for epoch_num in range(epochs):
@@ -82,10 +89,10 @@ def train(model, train_data: torchDataset, val_data, learning_rate=1e-6, epochs=
         )
 
 
-def evaluate(model, test_data):
-    test = torchDataset(test_data)
-    test_dataloader = torch.utils.data.DataLoader(test, batch_size=2)
-    use_cuda = torch.cuda.is_available()
+def evaluate(model: Annotator, test_data: torchDataset, use_cpu=False):
+
+    test_dataloader = torch.utils.data.DataLoader(test_data, batch_size=2)
+    use_cuda = torch.cuda.is_available() if not use_cpu else False
     device = torch.device("cuda" if use_cuda else "cpu")
 
     if use_cuda:
@@ -103,8 +110,6 @@ def evaluate(model, test_data):
 
     print(f"Test Accuracy: {total_acc_test / len(test_data): .3f}")
 
-
-evaluate(model, df_test)
 
 # What do you need me to work on?
 # should we use the discord or the session chat?
