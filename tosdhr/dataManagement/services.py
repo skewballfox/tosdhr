@@ -2,7 +2,7 @@
 
 
 import sys
-from typing import Optional
+from typing import List, Optional, Tuple
 from enum import Enum
 
 # from polyglot.detect import Detector
@@ -192,7 +192,7 @@ class BookShelf(object):
         are pretty useless once data has been fully aggregated in
         the bookshelf so the keys are not returned
         """
-        return iter(self.__documents.values())
+        return iter(self.__documents)
 
     def __len__(self):
         return len(self.__documents)
@@ -203,7 +203,11 @@ class BookShelf(object):
     def values(self):
         return self.__documents.values()
 
-    def get_annotation_cases(self):
+    def get_annotation_cases(self) -> Tuple[Counter, Counter]:
+        """returns a counter for the number of approved and declined cases
+        Note: unless collecting declined cases is explicitly activated
+        the declined case counter (the second returned counter) will be empty
+        """
         approved_cases = Counter()
         declined_cases = Counter()
         for doc in self.__documents.values():
@@ -212,13 +216,13 @@ class BookShelf(object):
             declined_cases.update(declined)
         return approved_cases, declined_cases
 
-    def get_annotation_count(self):
+    def get_annotation_count(self) -> int:
         count = 0
         for doc in self.__documents.values():
             count += len(doc)
         return count
 
-    def get_empty_doc_count(self):
+    def get_empty_doc_count(self) -> int:
         count = 0
         for doc in self.__documents.values():
             if len(doc) == 0:
@@ -285,15 +289,15 @@ class BookShelf(object):
         return cases
 
     # TODO: add methods for getting stats such as average number of annotations per document,
-    def prep_to_tokenize(self):
-        raw_documents = []
-        categories = []
+    def prep_to_tokenize(self) -> tuple[list[str], list[int]]:
+        raw_text: List[str] = []
+        categories: List[int] = []
         # TODO: confirm that there isn't a case 0
         uncategorized: int = 0
         for document in self.__documents.values():
             split_points = [0]
             doc_stop: int = len(document.text)
-            raw_text = []
+            # raw_text = []
             # for annotation in document:
             #    split_points.append(annotation.quote_end)
             # split_points.append(len(document.text))
@@ -318,8 +322,8 @@ class BookShelf(object):
                 raw_text.append(document.text[annotation.quote])
                 categories.append(annotation.case_id)
                 doc_stop = annotation.quote_start
-            raw_documents.append(raw_text)
-        return raw_documents, categories
+            # raw_documents.append(raw_text)
+        return raw_text, categories
 
 
 def language_filter(docs: BookShelf, language="en"):
@@ -347,11 +351,14 @@ def get_reviewed_documents(
     documents = BookShelf()
     borks = Borks()
     for doc in service_json["parameters"]["documents"]:
+        # print(doc)
         id: int = doc["id"]
         documents[id] = Document(id, doc["name"], doc["text"])
+    # print(documents)
     for point in service_json["parameters"]["points"]:
         if point["document_id"] is not None:
             point_status = point["status"]
+
             if point_status == "approved" or (
                 collect_declined and point_status == "declined"
             ):
@@ -379,6 +386,7 @@ def get_reviewed_documents(
                         point,
                         BorkType.MissingDocument,
                     )
+                    # print("borked missing doc")
                     # if approved_flag is False:
                     #    print("declined and borked due to missing document")
 
@@ -399,7 +407,7 @@ def get_reviewed_documents(
                         # if approved_flag is False:
                         #    print("declined and borked due to missing quote")
                         continue
-
+                # print("adding annotation")
                 documents[doc_id].add_annotation(
                     point_id, case_id, approved_flag, start, stop
                 )

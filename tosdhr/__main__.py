@@ -50,13 +50,25 @@ args = parser.parse_args()
 
 if args.topics_flag:
     from tosdhr.dataManagement.data_handler import get_topics
+    from toshdr.dataManagement.services import Bookshelf
+
+    # TODO: Check if cases matches of get_topics and get_annotation_cases have any matching cases if so print them out
 
     get_topics()
 if args.tokenize:
 
     documents, borks = data.get_all_reviewed_documents()
     documents.clean()
-    print(f" doc text{documents.tokenize()}")
+
+    approved_case_counter, decline_case_counter = documents.get_annotation_cases()
+    print(approved_case_counter)
+    print(decline_case_counter)
+    # case_set = set(approved_case_counter.keys())
+    raw_text, case_ids = documents.prep_to_tokenize()
+    # print(f"case set: {case_set}")
+    from tosdhr.modelManager.torch_data import Dataset
+
+    torch_data = Dataset(raw_text, case_ids)
 if args.bert_flag:
     from tosdhr.modelManager.bert import Annotator, train, evaluate
 

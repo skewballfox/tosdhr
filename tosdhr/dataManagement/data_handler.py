@@ -5,10 +5,11 @@ from requests import request, Session
 from tosdhr.dataManagement.services import get_reviewed_documents, BookShelf, Borks
 from dotenv import dotenv_values
 from bs4 import BeautifulSoup
+import regex as re
 
 
 def get_topics():
-
+    output = []
     s = Session()
     config = dotenv_values()
     print(config)
@@ -22,14 +23,23 @@ def get_topics():
     # partial url
     soup.select("a[href*=topics]")[0]
     for topic in soup.select("a[href*=topics]"):
-        url = f"https://edit.tosdr.org/{topic.get('href')}"
-        # title for topic
-        topic_name = topic.next_element
-        print(BeautifulSoup(s.get(url).content).body.prettify())
-        break
-        # contents also prints title
-
-    print(s.get(url).content)
+        if topic.text != "[Deprecated]":
+            # print(topic.text)
+            # print("\n")
+            url = f"https://edit.tosdr.org/{topic.get('href')}"
+            # print(url)
+            # Travel to url and get the "a[href*=cases]" links
+            response = s.get(url, auth=(config["USER"], config["PASSWORD"]))
+            soup = BeautifulSoup(response.content)
+            soup.footer.decompose()
+            for case in soup.select("a[href*=cases]"):
+                url = f"https://edit.tosdr.org/{case.get('href')}"
+                caseID = case.get("href").split("/")[-1]
+                # print(case.text)
+                # print(url)
+                # print(caseID)
+                output.append(caseID)
+    return output
 
 
 class DataHandler(object):
@@ -60,6 +70,7 @@ class DataHandler(object):
             dict : the json representation of the data requested
         """
         file_path = data_dir / file_name
+
         if file_path.exists():
             with open(file_path, "r") as f:
                 return json.loads(f.read())
@@ -113,6 +124,7 @@ class DataHandler(object):
         documents = BookShelf()
         borks = Borks()
         for (service_name, id) in self.get_list_reviewed_services():
+            # print(service_name)
             docs, new_borks = get_reviewed_documents(self.get_service(service_name, id))
             # if docs in documents:
             #     print("yeet")

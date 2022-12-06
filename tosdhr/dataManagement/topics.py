@@ -36,6 +36,3 @@ def get_topics(project_dir):
         # contents also prints title
 
     print(s.get(url).content)
-
-
-get_topics(None)
