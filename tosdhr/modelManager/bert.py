@@ -1,4 +1,5 @@
 from torch import nn
+import numpy as np
 import torch
 from torch.optim import Adam
 from torch import cuda, device as torch_device
@@ -11,7 +12,7 @@ tokenizer = AutoTokenizer.from_pretrained("nlpaueb/legal-bert-base-uncased")
 # train(model, df_train, df_val)
 
 
-class Annotator(nn.Model):
+class Annotator(nn.Module):
     def __init__(self, dropout=0.05):
         super(Annotator, self).__init__()
         self.bert = AutoModelForPreTraining.from_pretrained(
@@ -35,14 +36,14 @@ class Annotator(nn.Model):
 def train(
     model: Annotator,
     train_data: torchDataset,
-    val_data: torchDataset,
+    validation_data: torchDataset,
     learning_rate=1e-6,
     epochs=5,
     use_cpu=False,
 ):
 
     train_dataloader = torchDataLoader(train_data, batch_size=2, shuffle=True)
-    val_dataloader = torchDataLoader(val_data, batch_size=2)
+    validation_dataloader = torchDataLoader(validation_data, batch_size=2)
     use_cuda: bool = cuda.is_available() if not use_cpu else False
     device: torch_device = torch_device("cuda" if use_cuda else "cpu")
     criterion: nn.CrossEntropyLoss = nn.CrossEntropyLoss()
@@ -72,7 +73,7 @@ def train(
         total_loss_val = 0
 
         with torch.no_grad():
-            for val_input, val_label in val_dataloader:
+            for val_input, val_label in validation_dataloader:
                 val_label = val_label.to(device)
                 mask = val_input["attention_mask"].to(device)
                 input_id = val_input["input_ids"].squeeze(1).to(device)
@@ -84,8 +85,8 @@ def train(
         print(
             f"Epochs: {epoch_num + 1} | Train Loss: {total_loss_train / len(train_data): .3f} \
                 | Train Accuracy: {total_acc_train / len(train_data): .3f} \
-                | Val Loss: {total_loss_val / len(val_data): .3f} \
-                | Val Accuracy: {total_acc_val / len(val_data): .3f}"
+                | Val Loss: {total_loss_val / len(validation_data): .3f} \
+                | Val Accuracy: {total_acc_val / len(validation_data): .3f}"
         )
 
 

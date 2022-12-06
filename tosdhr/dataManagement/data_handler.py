@@ -9,7 +9,7 @@ import regex as re
 
 
 def get_topics():
-    output = []
+    output = {}
     s = Session()
     config = dotenv_values()
     print(config)
@@ -18,7 +18,7 @@ def get_topics():
         auth=(config["USER"], config["PASSWORD"]),
     )
     soup = BeautifulSoup(response.content)
-    soup.footer.decompose()
+    # soup.footer.decompose()
     # soup.body
     # partial url
     soup.select("a[href*=topics]")[0]
@@ -31,14 +31,12 @@ def get_topics():
             # Travel to url and get the "a[href*=cases]" links
             response = s.get(url, auth=(config["USER"], config["PASSWORD"]))
             soup = BeautifulSoup(response.content)
-            soup.footer.decompose()
+            # soup.footer.decompose()
             for case in soup.select("a[href*=cases]"):
                 url = f"https://edit.tosdr.org/{case.get('href')}"
                 caseID = case.get("href").split("/")[-1]
-                # print(case.text)
-                # print(url)
-                # print(caseID)
-                output.append(caseID)
+                output[str(caseID)] = (case.text, topic.text)
+    print(output)
     return output
 
 

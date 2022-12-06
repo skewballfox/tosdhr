@@ -4,6 +4,12 @@
 import sys
 from typing import List, Optional, Tuple
 from enum import Enum
+from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning
+import warnings
+
+from pandas import DataFrame
+
+warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 
 # from polyglot.detect import Detector
 from langdetect import detect, detect_langs
@@ -289,41 +295,50 @@ class BookShelf(object):
         return cases
 
     # TODO: add methods for getting stats such as average number of annotations per document,
-    def prep_to_tokenize(self) -> tuple[list[str], list[int]]:
+    def to_dataframe(self, all_text=False) -> DataFrame:
         raw_text: List[str] = []
         categories: List[int] = []
+        topic_names: List[str] = []
+        case_text: List[str] = []
         # TODO: confirm that there isn't a case 0
         uncategorized: int = 0
         for document in self.__documents.values():
             split_points = [0]
             doc_stop: int = len(document.text)
-            # raw_text = []
-            # for annotation in document:
-            #    split_points.append(annotation.quote_end)
-            # split_points.append(len(document.text))
-            # raw_text = [
-            #    document.text[i, j] for i, j in zip(split_points[:-1], split_points[1:])
-            # ]
-            # print(raw_text)
-            for annotation in reversed(document.annotations):
-                # document.text
-                # document.text = (
-                #     document.text[: annotation.quote_start]
-                #     + annotation.case_id
-                #     + document.text[annotation.quote_start : annotation.quote_stop]
-                #     + document.text[annotation.quote_stop :]
-                # )
-                if annotation.quote_end != doc_stop:
 
+            for annotation in reversed(document.annotations):
+                if all_text and annotation.quote_end != doc_stop:
                     raw_text.append(document.text[annotation.quote_end : doc_stop])
                     categories.append(0)
-                # should probably confirm that annotation is valid, murphies law and all that
-                # but fuck it
-                raw_text.append(document.text[annotation.quote])
+
+                    # Confirm Annotation is valid
+
+                # print(f"text prestrip: {document.text[annotation.quote]}")
+                print(annotation.case_id)
+                raw_text.append(
+                    BeautifulSoup(document.text[annotation.quote]).get_text()
+                )
+
                 categories.append(annotation.case_id)
                 doc_stop = annotation.quote_start
-            # raw_documents.append(raw_text)
-        return raw_text, categories
+                # add the topic name to the list topic_names
+                topic_names.append(CaseID_to_TopicName(annotation.case_id)[1])
+                # add the case text to the list case_text
+                case_text.append(CaseID_to_TopicName(annotation.case_id)[0])
+
+        return DataFrame(
+            zip(categories, raw_text, case_text, topic_names),
+            columns=["case", "text", "case_text", "topic"],
+        )
+
+
+def CaseID_to_TopicName(case_id):
+    from tosdhr.dataManagement.data_handler import get_topics
+
+    CaseInfo = get_topics()
+    # if case_id is found in CaseInfo[0] return the case text and topic name
+
+    return CaseInfo[str(case_id)]
 
 
 def language_filter(docs: BookShelf, language="en"):

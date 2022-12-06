@@ -2,6 +2,7 @@ import torch
 import numpy as np
 from numpy.typing import NDArray
 from transformers import AutoTokenizer
+from pandas import DataFrame
 
 # from torch.utils.data import
 
@@ -9,10 +10,20 @@ from transformers import AutoTokenizer
 tokenizer = AutoTokenizer.from_pretrained("nlpaueb/legal-bert-base-uncased")
 
 
-class Dataset(torch.utils.data.Dataset):
-    def __init__(self, raw_text: list[str], case_ids: list[int]):
+def train_val_test_split(df: DataFrame):
+    np.random.seed(112)
 
-        self.labels = [case_id for case_id in case_ids]
+    df_train, df_val, df_test = np.split(
+        df.sample(frac=1, random_state=42), [int(0.8 * len(df)), int(0.9 * len(df))]
+    )
+    return Dataset(df_train), Dataset(df_val), Dataset(df_test)
+
+
+class Dataset(torch.utils.data.Dataset):
+    def __init__(self, df: DataFrame):
+        print(df["case"])
+        self.labels = [case_id for case_id in set(df["case"])]
+
         self.texts = [
             tokenizer(
                 text,
@@ -21,9 +32,8 @@ class Dataset(torch.utils.data.Dataset):
                 truncation=True,
                 return_tensors="pt",
             )
-            for text in raw_text
+            for text in df["text"]
         ]
-        print(self.texts)
 
     def classes(self):
         return self.labels
