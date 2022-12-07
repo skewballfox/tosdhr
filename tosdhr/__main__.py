@@ -4,6 +4,7 @@ from tosdhr.dataManagement.data_handler import DataHandler
 from tosdhr.dataManagement.services import language_filter
 import argparse
 from pandas import DataFrame
+import pandas as pd
 from tosdhr.dataManagement.topics import get_topics
 from tosdhr.modelManager.bert import Annotator, train, evaluate
 from tosdhr.modelManager.torch_data import Dataset, train_val_test_split
@@ -105,15 +106,21 @@ if args.cpu_flag:
 if args.Zack:
     # from tosdhr.dataManagement.services import
 
-    documents, borks = data.get_all_reviewed_documents()
-    documents.clean()
+    # documents, borks = data.get_all_reviewed_documents()
+    # documents.clean()
 
     # approved_case_counter, decline_case_counter = documents.get_annotation_cases()
     # # print(approved_case_counter)
     # # print(decline_case_counter)
     # case_set = set(approved_case_counter.keys())
-    df = documents.to_dataframe()
+    # df = documents.to_dataframe()
+    # print(df)
+
+    # convert my csv to a pandas dataframe
+
+    df = pd.read_csv("data.csv", sep="^")
     print(df)
+
     test_data, validation_data, train_data = train_val_test_split(df)
     from transformers import AutoModelForPreTraining
 
@@ -123,6 +130,7 @@ if args.Zack:
 
     train(legal_bert, train_data, validation_data)
     evaluate(Annotator, test_data)
+
 
 # if no arguments have been passed
 # https://stackoverflow.com/questions/10698468/argparse-check-if-any-arguments-have-been-passed

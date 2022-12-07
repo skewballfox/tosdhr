@@ -1,8 +1,8 @@
 from torch import nn
-import numpy as np
+
 import torch
 from torch.optim import Adam
-from torch import cuda, device as torch_device
+from torch import cuda, device as torch_device, squeeze
 from tqdm import tqdm
 from torch.utils.data import Dataset as torchDataset, DataLoader as torchDataLoader
 from transformers import AutoTokenizer, AutoModelForPreTraining
@@ -60,15 +60,18 @@ def train(
         model.train()
         print("called model train")
         for train_input, train_label in tqdm(train_dataloader):
+            # print(train_input)
+            # print(train_label)
             train_label = train_label.to(device)
             mask = train_input["attention_mask"].to(device)
             print("Made it past mask")
-            input_id = np.squeeze(train_input["input_ids"].to(device), axis=0)
+            input_id = train_input["input_ids"].to(device)
+            print(input_id)
             print("Made it past input_id")
             print(input_id.shape)
             # input_ids, which should be (batch_size, seq_length)
-            for inpt in input_id:
-                output = model.forward(inpt, mask)
+
+            output = model.forward(input_id, mask)
 
             batch_loss = criterion(output, train_label.long())
             total_loss_train += batch_loss.item()
@@ -84,7 +87,7 @@ def train(
             for val_input, val_label in validation_dataloader:
                 val_label = val_label.to(device)
                 mask = val_input["attention_mask"].to(device)
-                input_id = val_input["input_ids"].squeeze(1).to(device)
+                input_id = squeeze(val_input["input_ids"].to(device), 1)
                 output = model(input_id, mask)
                 batch_loss = criterion(output, val_label.long())
                 total_loss_val += batch_loss.item()
