@@ -7,7 +7,6 @@ from tqdm import tqdm
 from torch.utils.data import Dataset as torchDataset, DataLoader as torchDataLoader
 from transformers import AutoTokenizer, AutoModelForPreTraining
 
-tokenizer = AutoTokenizer.from_pretrained("nlpaueb/legal-bert-base-uncased")
 
 # train(model, df_train, df_val)
 
@@ -41,26 +40,36 @@ def train(
     epochs=5,
     use_cpu=False,
 ):
-
+    print("starting train")
     train_dataloader = torchDataLoader(train_data, batch_size=2, shuffle=True)
     validation_dataloader = torchDataLoader(validation_data, batch_size=2)
     use_cuda: bool = cuda.is_available() if not use_cpu else False
     device: torch_device = torch_device("cuda" if use_cuda else "cpu")
     criterion: nn.CrossEntropyLoss = nn.CrossEntropyLoss()
     optimizer: Adam = Adam(model.parameters(), lr=learning_rate)
-
+    print("past optimizer")
     if use_cuda:
         model: Annotator = model.cuda()
         criterion = criterion.cuda()
-
+    print("starting epochs")
     for epoch_num in range(epochs):
+        print(epoch_num)
         total_acc_train = 0
         total_loss_train = 0
+        print("about to call model train")
+        model.train()
+        print("called model train")
         for train_input, train_label in tqdm(train_dataloader):
             train_label = train_label.to(device)
             mask = train_input["attention_mask"].to(device)
-            input_id = train_input["input_ids"].squeeze(1).to(device)
-            output = model(input_id, mask)
+            print("Made it past mask")
+            input_id = np.squeeze(train_input["input_ids"].to(device), axis=0)
+            print("Made it past input_id")
+            print(input_id.shape)
+            # input_ids, which should be (batch_size, seq_length)
+            for inpt in input_id:
+                output = model.forward(inpt, mask)
+
             batch_loss = criterion(output, train_label.long())
             total_loss_train += batch_loss.item()
             acc = (output.argmax(dim=1) == train_label).sum().item()
@@ -68,10 +77,9 @@ def train(
             model.zero_grad()
             batch_loss.backward()
             optimizer.step()
-
         total_acc_val = 0
         total_loss_val = 0
-
+        print("past for loop")
         with torch.no_grad():
             for val_input, val_label in validation_dataloader:
                 val_label = val_label.to(device)

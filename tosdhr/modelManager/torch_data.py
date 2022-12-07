@@ -3,11 +3,13 @@ import numpy as np
 from numpy.typing import NDArray
 from transformers import AutoTokenizer
 from pandas import DataFrame
+import pandas
 
 # from torch.utils.data import
 
 # labels = {"business": 0, "entertainment": 1, "sport": 2, "tech": 3, "politics": 4}
 tokenizer = AutoTokenizer.from_pretrained("nlpaueb/legal-bert-base-uncased")
+tokenizer.init_kwargs["model_max_length"] = 512
 
 
 def train_val_test_split(df: DataFrame):
@@ -20,9 +22,20 @@ def train_val_test_split(df: DataFrame):
 
 
 class Dataset(torch.utils.data.Dataset):
-    def __init__(self, df: DataFrame):
-        print(df["case"])
-        self.labels = [case_id for case_id in set(df["case"])]
+    def __init__(self, df: DataFrame, use_topics=True):
+        labels = {}
+        if use_topics:
+            for (i, topic) in enumerate(set(df["topics"])):
+                labels[topic] = i
+        else:
+            for (i, case) in enumerate(set(df["case"])):
+                labels[case] = i
+
+        self.labels = (
+            [labels[topic] for topic in df["topics"]]
+            if use_topics
+            else [labels[case] for case in df["case"]]
+        )
 
         self.texts = [
             tokenizer(

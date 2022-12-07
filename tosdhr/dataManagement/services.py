@@ -4,13 +4,13 @@
 import sys
 from typing import List, Optional, Tuple
 from enum import Enum
-from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning
+from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning, GuessedAtParserWarning
 import warnings
-
+from tosdhr.dataManagement.topics import get_topics
 from pandas import DataFrame
 
 warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
-
+warnings.filterwarnings("ignore", category=GuessedAtParserWarning)
 # from polyglot.detect import Detector
 from langdetect import detect, detect_langs
 from collections import Counter
@@ -299,7 +299,9 @@ class BookShelf(object):
         raw_text: List[str] = []
         categories: List[int] = []
         topic_names: List[str] = []
-        case_text: List[str] = []
+        case_title: List[str] = []
+        CaseInfo = get_topics()
+        shit_count = 0
         # TODO: confirm that there isn't a case 0
         uncategorized: int = 0
         for document in self.__documents.values():
@@ -314,31 +316,36 @@ class BookShelf(object):
                     # Confirm Annotation is valid
 
                 # print(f"text prestrip: {document.text[annotation.quote]}")
-                print(annotation.case_id)
                 raw_text.append(
                     BeautifulSoup(document.text[annotation.quote]).get_text()
                 )
 
-                categories.append(annotation.case_id)
-                doc_stop = annotation.quote_start
-                # add the topic name to the list topic_names
-                topic_names.append(CaseID_to_TopicName(annotation.case_id)[1])
-                # add the case text to the list case_text
-                case_text.append(CaseID_to_TopicName(annotation.case_id)[0])
+                try:
+                    categories.append(annotation.case_id)
+                    doc_stop = annotation.quote_start
+                    # add the topic name to the list topic_names
+                    topic_names.append(CaseInfo[str(annotation.case_id)][1])
+                    # add the case text to the list case_text
+                    case_title.append(CaseInfo[str(annotation.case_id)][0])
+                except KeyError:
+                    shit_count += 1
+                    print(
+                        f"KeyError - Deprecated Case: {annotation.case_id}, Running Total of Deprecated Cases: {shit_count} "  # {document[annotation.quote]} Uncomment if specific case output is needed
+                    )
 
         return DataFrame(
-            zip(categories, raw_text, case_text, topic_names),
-            columns=["case", "text", "case_text", "topic"],
+            zip(topic_names, case_title, raw_text, categories),
+            columns=["topics", "case", "text", "caseid"],
         )
 
 
-def CaseID_to_TopicName(case_id):
-    from tosdhr.dataManagement.data_handler import get_topics
+# def CaseID_to_TopicName(case_id):
+#     from tosdhr.dataManagement.data_handler import get_topics
 
-    CaseInfo = get_topics()
-    # if case_id is found in CaseInfo[0] return the case text and topic name
 
-    return CaseInfo[str(case_id)]
+#     # if case_id is found in CaseInfo[0] return the case text and topic name
+
+#     return CaseInfo[str(case_id)]
 
 
 def language_filter(docs: BookShelf, language="en"):

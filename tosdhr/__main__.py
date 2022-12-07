@@ -4,7 +4,9 @@ from tosdhr.dataManagement.data_handler import DataHandler
 from tosdhr.dataManagement.services import language_filter
 import argparse
 from pandas import DataFrame
-
+from tosdhr.dataManagement.topics import get_topics
+from tosdhr.modelManager.bert import Annotator, train, evaluate
+from tosdhr.modelManager.torch_data import Dataset, train_val_test_split
 
 data_dir: Path = Path(__file__).parent.parent / "data"
 output_dir: Path = Path(__file__).parent.parent / "outputs"
@@ -58,7 +60,6 @@ parser.add_argument(
 args = parser.parse_args()
 
 if args.topics_flag:
-    from tosdhr.dataManagement.data_handler import get_topics
 
     # use data
     documents, borks = data.get_all_reviewed_documents()
@@ -83,13 +84,7 @@ if args.tokenize:
     # print(f"raw text: {raw_text}")
     from tosdhr.modelManager.torch_data import Dataset, train_val_test_split
 
-    test_data, validation_data, train_data = train_val_test_split(df)
 
-    from tosdhr.modelManager.bert import Annotator, train, evaluate
-
-    legal_bert = Annotator()
-    train(legal_bert, train_data, validation_data)
-    evaluate(Annotator, test_data)
 # think you can add a column to the dataframe for topics?
 # What cha mean...? Isl it a Panda's dataframe?,sort of Polars I don't know Polars I can do some googling though if you need me to
 # the syntax should be a drop in replacement for pandas, it's basically the same thing, but slightly faster
@@ -108,8 +103,6 @@ if args.cpu_flag:
 
 
 if args.Zack:
-    from tosdhr.dataManagement.data_handler import get_topics
-
     # from tosdhr.dataManagement.services import
 
     documents, borks = data.get_all_reviewed_documents()
@@ -120,9 +113,17 @@ if args.Zack:
     # # print(decline_case_counter)
     # case_set = set(approved_case_counter.keys())
     df = documents.to_dataframe()
-    df: DataFrame = documents.to_dataframe()
+    print(df)
+    test_data, validation_data, train_data = train_val_test_split(df)
+    from transformers import AutoModelForPreTraining
 
-    print(df.columns)
+    legal_bert = AutoModelForPreTraining.from_pretrained(
+        "nlpaueb/legal-bert-base-uncased"
+    )
+
+    train(legal_bert, train_data, validation_data)
+    evaluate(Annotator, test_data)
+
 # if no arguments have been passed
 # https://stackoverflow.com/questions/10698468/argparse-check-if-any-arguments-have-been-passed
 if not any(vars(args).values()):

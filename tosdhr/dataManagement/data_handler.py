@@ -8,38 +8,6 @@ from bs4 import BeautifulSoup
 import regex as re
 
 
-def get_topics():
-    output = {}
-    s = Session()
-    config = dotenv_values()
-    print(config)
-    response = s.get(
-        "https://edit.tosdr.org/topics",
-        auth=(config["USER"], config["PASSWORD"]),
-    )
-    soup = BeautifulSoup(response.content)
-    # soup.footer.decompose()
-    # soup.body
-    # partial url
-    soup.select("a[href*=topics]")[0]
-    for topic in soup.select("a[href*=topics]"):
-        if topic.text != "[Deprecated]":
-            # print(topic.text)
-            # print("\n")
-            url = f"https://edit.tosdr.org/{topic.get('href')}"
-            # print(url)
-            # Travel to url and get the "a[href*=cases]" links
-            response = s.get(url, auth=(config["USER"], config["PASSWORD"]))
-            soup = BeautifulSoup(response.content)
-            # soup.footer.decompose()
-            for case in soup.select("a[href*=cases]"):
-                url = f"https://edit.tosdr.org/{case.get('href')}"
-                caseID = case.get("href").split("/")[-1]
-                output[str(caseID)] = (case.text, topic.text)
-    print(output)
-    return output
-
-
 class DataHandler(object):
     """class for handling input data for the model, pretty much the only part
     of the code which should be interacting the with ToS;DR website, or the

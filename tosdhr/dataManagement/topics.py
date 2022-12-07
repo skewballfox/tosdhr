@@ -1,7 +1,9 @@
 from dotenv import dotenv_values
 from requests import request, Session
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, GuessedAtParserWarning
+import warnings
 
+warnings.filterwarnings("ignore", category=GuessedAtParserWarning)
 # TODO: add code for pulling case data on all cases, but
 # filter it down to the cases we have annotations for
 class Case(object):
@@ -12,27 +14,29 @@ class Case(object):
         self.declined_annotations = []
 
 
-# ps we already have the function to get a list of cases, check main look for case_set
-def get_topics(project_dir):
-    # print(project_dir)
+def get_topics():
+    output = {}
     s = Session()
     config = dotenv_values()
-    print(config)
+
+    # Get the topics page
     response = s.get(
         "https://edit.tosdr.org/topics",
         auth=(config["USER"], config["PASSWORD"]),
     )
     soup = BeautifulSoup(response.content)
-    soup.footer.decompose()
-    # soup.body
-    # partial url
-    soup.select("a[href*=topics]")[0]
-    for topic in soup.select("a[href*=topics]"):
-        url = f"https://edit.tosdr.org/{topic.get('href')}"
-        # title for topic
-        topic_name = topic.next_element
-        print(BeautifulSoup(s.get(url).content).body.prettify())
-        break
-        # contents also prints title
 
-    print(s.get(url).content)
+    # Get the links to the topic pages
+    for topic in soup.select("a[href*=topics]"):
+        if topic.text != "[Deprecated]":
+            # Get the URL for the topic page
+            url = f"https://edit.tosdr.org/{topic.get('href')}"
+            # Go to the topic page
+            response = s.get(url, auth=(config["USER"], config["PASSWORD"]))
+            soup = BeautifulSoup(response.content)
+            # Get the links to the case pages
+            for case in soup.select("a[href*=cases]"):
+                url = f"https://edit.tosdr.org/{case.get('href')}"
+                caseID = case.get("href").split("/")[-1]
+                output[str(caseID)] = (case.text, topic.text)
+    return output
